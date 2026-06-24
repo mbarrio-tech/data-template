@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# hooks/session-start
+# Fires on: SessionStart (new session, clear, compact — not on resume).
+#
+# If CLAUDE.md still contains the template placeholder [Project Name],
+# the project has not been bootstrapped. Inject a setup prompt that tells
+# Claude to offer Flow A (inception agent) or Flow B (project-adoption agent).
+#
+# If already bootstrapped: inject live repository state as additional context.
+
+# Bootstrap detection — default to bootstrapped (safe fallback)
+bootstrapped=true
+if [ -f CLAUDE.md ] && grep -q '\[Project Name\]' CLAUDE.md; then
+    bootstrapped=false
+fi
+
+if [ "$bootstrapped" = false ]; then
+    setup_msg="SETUP REQUIRED — This repository has not been bootstrapped yet. CLAUDE.md still contains template placeholder text. Before doing anything else, tell the user: This project-template has not been set up yet. Ask them which flow they want: Flow A for a new project from scratch (run the inception agent) or Flow B to adopt the template into an existing project (run the project-adoption agent). Wait for their answer, then run the corresponding agent."
+    printf '%s' "$setup_msg" | jq -Rc '{"continue":true,"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":.}}'
+else
+    branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+    dirty=$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')
+    last_commit=$(git log -1 --format="%h %s" 2>/dev/null || echo "none")
+    context="Current branch: ${branch}. Uncommitted changes: ${dirty} file(s). Last commit: ${last_commit}."
+    printf '%s' "$context" | jq -Rc '{"continue":true,"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":.}}'
+fi

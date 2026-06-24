@@ -1,0 +1,17 @@
+{
+  "_note": "Reference copy. The active Claude Code hook config lives in .claude/settings.json — Claude Code will not read this file directly.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash hooks/session-start 2>/dev/null || powershell -NonInteractive -NoProfile -File hooks/session-start.ps1",
+            "async": false
+          }
+        ]
+      }
+    ]
+  }
+}
