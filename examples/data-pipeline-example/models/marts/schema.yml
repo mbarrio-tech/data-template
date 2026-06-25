@@ -107,3 +107,36 @@ models:
           SPEC: specs/fact_orders/customer-running-total.spec.sql
         tests:
           - not_null
+
+  # ── mart_category_revenue (Critical tier) ─────────────────────────────
+  - name: mart_category_revenue
+    description: >
+      One row per product_category, aggregated total revenue and order count,
+      ranked by total_revenue descending. Feeds the revenue dashboard (Critical tier).
+      Contains RANK() window function — SPEC: specs/mart_category_revenue/category-revenue-rank.spec.sql
+    columns:
+      - name: product_category
+        description: "Primary key of this aggregation. One row per category. Never null."
+        tests:
+          - not_null
+          - unique
+          - accepted_values:
+              values: ['software', 'service', 'hardware']
+
+      - name: total_revenue
+        description: "Sum of order amounts for this category in USD. Never null; must be >= 0."
+        tests:
+          - not_null
+
+      - name: order_count
+        description: "Number of non-cancelled orders in this category. Never null."
+        tests:
+          - not_null
+
+      - name: revenue_rank
+        description: >
+          Rank of this category by total_revenue descending. Rank 1 = highest revenue.
+          Ties receive the same rank (standard RANK() — not DENSE_RANK()).
+          SPEC: specs/mart_category_revenue/category-revenue-rank.spec.sql
+        tests:
+          - not_null
