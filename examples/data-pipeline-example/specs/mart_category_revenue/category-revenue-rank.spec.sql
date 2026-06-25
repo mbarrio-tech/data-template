@@ -35,15 +35,30 @@
 -- FAILS WHEN: this query returns rows. Empty result = behaviour is correct.
 
 WITH input_fixture AS (
-    SELECT 1 AS order_id, 'software' AS product_category, 500.00 AS amount
+    SELECT
+        1 AS order_id,
+        'software' AS product_category,
+        500.00 AS amount
     UNION ALL
-    SELECT 2, 'software', 300.00
+    SELECT
+        2 AS order_id,
+        'software' AS product_category,
+        300.00 AS amount
     UNION ALL
-    SELECT 3, 'hardware', 800.00
+    SELECT
+        3 AS order_id,
+        'hardware' AS product_category,
+        800.00 AS amount
     UNION ALL
-    SELECT 4, 'service', 300.00
+    SELECT
+        4 AS order_id,
+        'service' AS product_category,
+        300.00 AS amount
     UNION ALL
-    SELECT 5, 'service', 500.00
+    SELECT
+        5 AS order_id,
+        'service' AS product_category,
+        500.00 AS amount
 ),
 
 aggregated AS (
@@ -67,29 +82,43 @@ actual AS (
 ),
 
 expected AS (
-    SELECT 'software' AS product_category, 800.00 AS total_revenue, 2 AS order_count, 1 AS revenue_rank
+    SELECT
+        'software' AS product_category,
+        800.00 AS total_revenue,
+        2 AS order_count,
+        1 AS revenue_rank
     UNION ALL
-    SELECT 'hardware', 800.00, 1, 1
+    SELECT
+        'hardware' AS product_category,
+        800.00 AS total_revenue,
+        1 AS order_count,
+        1 AS revenue_rank
     UNION ALL
-    SELECT 'service', 800.00, 2, 1
+    SELECT
+        'service' AS product_category,
+        800.00 AS total_revenue,
+        2 AS order_count,
+        1 AS revenue_rank
 ),
 
 mismatches AS (
     SELECT
-        COALESCE(actual.product_category, expected.product_category) AS product_category,
         actual.total_revenue AS actual_total_revenue,
-        expected.total_revenue AS expected_total_revenue,
         actual.order_count AS actual_order_count,
-        expected.order_count AS expected_order_count,
         actual.revenue_rank AS actual_revenue_rank,
-        expected.revenue_rank AS expected_revenue_rank
+        expected.total_revenue AS expected_total_revenue,
+        expected.order_count AS expected_order_count,
+        expected.revenue_rank AS expected_revenue_rank,
+        COALESCE(actual.product_category, expected.product_category) AS product_category
     FROM actual
-    FULL OUTER JOIN expected ON actual.product_category = expected.product_category
-    WHERE actual.revenue_rank != expected.revenue_rank
-       OR actual.total_revenue != expected.total_revenue
-       OR actual.order_count != expected.order_count
-       OR actual.product_category IS NULL
-       OR expected.product_category IS NULL
+    FULL OUTER JOIN expected
+        ON actual.product_category = expected.product_category
+    WHERE
+        actual.revenue_rank != expected.revenue_rank
+        OR actual.total_revenue != expected.total_revenue
+        OR actual.order_count != expected.order_count
+        OR actual.product_category IS NULL
+        OR expected.product_category IS NULL
 )
 
 SELECT * FROM mismatches;
