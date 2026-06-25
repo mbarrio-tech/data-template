@@ -1,0 +1,4 @@
+product_id,name,category,unit_price
+P01,Cloud Starter Pack,software,250.00
+P02,Support Add-on,service,120.00
+P03,Cloud Pro Pack,software,480.00

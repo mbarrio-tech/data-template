@@ -1,0 +1,6 @@
+customer_id,name,email,country,segment,created_at
+1,Alice Martin,alice@example.com,US,enterprise,2024-01-10
+2,Bob Chen,bob@example.com,UK,smb,2024-02-14
+3,Carol White,carol@example.com,US,enterprise,2024-03-01
+4,Dan Kim,dan@example.com,CA,smb,2024-03-20
+5,Eva Lopez,eva@example.com,US,enterprise,2024-04-05

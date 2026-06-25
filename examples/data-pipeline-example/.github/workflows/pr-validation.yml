@@ -1,0 +1,81 @@
+name: PR Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "**.sql"
+      - "**.sqlx"
+      - "models/**"
+      - "specs/**"
+      - "**schema.yml"
+      - "**sources.yml"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+
+  # ── CHECK 1: SQL Formatting ──────────────────────────────────────
+  formatting:
+    name: SQL Formatting (SQLFluff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install SQLFluff
+        run: pip install sqlfluff
+
+      - name: Get changed SQL files
+        id: changed
+        run: |
+          BASE_SHA=$(git merge-base HEAD origin/main)
+          CHANGED=$(git diff --name-only "$BASE_SHA" HEAD -- '*.sql' | tr '\n' ' ')
+          echo "files=$CHANGED" >> "$GITHUB_OUTPUT"
+
+      - name: Lint changed files
+        if: steps.changed.outputs.files != ''
+        run: sqlfluff lint ${{ steps.changed.outputs.files }} --format github-annotation
+
+      - name: No SQL files changed
+        if: steps.changed.outputs.files == ''
+        run: echo "No SQL files changed. Skipping."
+
+  # ── CHECK 2: Schema Breaker ──────────────────────────────────────
+  schema-breaker:
+    name: Schema Breaker (DAG impact)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dbt-duckdb
+        run: pip install dbt-duckdb pyyaml networkx
+
+      - name: Compile dbt manifest
+        run: dbt compile --profiles-dir .
+        # Generates target/manifest.json used by the schema breaker
+
+      - name: Run schema breaker
+        run: python scripts/check_schema_breaking.py
+        env:
+          BASE_REF: origin/main
+          MANIFEST_PATH: target/manifest.json
+
+  # ── CHECK 3: Copilot Review ──────────────────────────────────────
+  # Runs natively via GitHub Copilot — no workflow job required.
+  # Enable in: Settings → Copilot → Code review → ON
+  # Instructions: .github/copilot-code-review-instructions.md

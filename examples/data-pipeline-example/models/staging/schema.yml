@@ -1,0 +1,108 @@
+version: 2
+
+models:
+  # ── stg_customers ──────────────────────────────────────────────
+  - name: stg_customers
+    description: "Light rename of the raw customers seed. One row per customer."
+    columns:
+      - name: customer_id
+        description: "Primary key. Surrogate from source system."
+        tests:
+          - not_null
+          - unique
+
+      - name: customer_name
+        description: "Full name. Never null in a valid source record."
+        tests:
+          - not_null
+
+      - name: email
+        description: "Contact email. Nullable — some B2B accounts omit it."
+
+      - name: country
+        description: "ISO 3166-1 alpha-2 country code."
+        tests:
+          - accepted_values:
+              values: ['US', 'UK', 'CA', 'DE', 'FR', 'AU']
+
+      - name: segment
+        description: "Commercial segment assigned at signup."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['enterprise', 'smb', 'startup']
+
+      - name: created_date
+        description: "Date the customer account was created."
+        tests:
+          - not_null
+
+  # ── stg_orders ─────────────────────────────────────────────────
+  - name: stg_orders
+    description: "Light rename of the raw orders seed. One row per order."
+    columns:
+      - name: order_id
+        description: "Primary key."
+        tests:
+          - not_null
+          - unique
+
+      - name: customer_id
+        description: "Foreign key to stg_customers."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_customers')
+              field: customer_id
+
+      - name: product_id
+        description: "Foreign key to stg_products."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_products')
+              field: product_id
+
+      - name: status
+        description: "Order lifecycle status."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['pending', 'shipped', 'delivered', 'cancelled']
+
+      - name: amount
+        description: "Order total in USD. Must be >= 0."
+        tests:
+          - not_null
+
+      - name: ordered_date
+        description: "Date the order was placed."
+        tests:
+          - not_null
+
+  # ── stg_products ───────────────────────────────────────────────
+  - name: stg_products
+    description: "Light rename of the raw products seed. One row per product."
+    columns:
+      - name: product_id
+        description: "Primary key."
+        tests:
+          - not_null
+          - unique
+
+      - name: product_name
+        description: "Human-readable product name."
+        tests:
+          - not_null
+
+      - name: category
+        description: "Product category."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['software', 'service', 'hardware']
+
+      - name: unit_price
+        description: "List price in USD."
+        tests:
+          - not_null

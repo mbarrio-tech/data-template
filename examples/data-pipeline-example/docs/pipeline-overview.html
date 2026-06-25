@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Data Pipeline Quality &amp; Security — Overview</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3350;
+    --text: #e2e8f0;
+    --muted: #8892a4;
+    --blue: #4f8ef7;
+    --green: #34d399;
+    --yellow: #fbbf24;
+    --red: #f87171;
+    --purple: #a78bfa;
+    --teal: #2dd4bf;
+    --orange: #fb923c;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); min-height: 100vh; padding: 32px 24px; }
+
+  h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 6px; }
+  .subtitle { color: var(--muted); font-size: 0.9rem; margin-bottom: 40px; }
+
+  /* ── SECTION LABELS ─────────────────────────────── */
+  .section-label {
+    font-size: 0.7rem; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--muted);
+    margin-bottom: 12px; padding-left: 4px;
+  }
+
+  /* ── PHASE ROW ──────────────────────────────────── */
+  .phase-row {
+    display: flex; gap: 0; align-items: stretch;
+    margin-bottom: 0;
+  }
+
+  /* ── PHASE BLOCK ────────────────────────────────── */
+  .phase {
+    flex: 1; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px 18px; position: relative;
+  }
+  .phase + .phase { margin-left: 0; }
+
+  .phase-title {
+    font-size: 0.75rem; font-weight: 700; letter-spacing: .08em;
+    text-transform: uppercase; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .phase-badge {
+    width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; font-weight: 700; flex-shrink: 0;
+  }
+
+  /* ── ARROWS BETWEEN PHASES ──────────────────────── */
+  .arrow-col {
+    display: flex; align-items: center; justify-content: center;
+    width: 40px; flex-shrink: 0;
+  }
+  .arrow-col svg { color: var(--border); }
+
+  /* ── NODE CARDS ─────────────────────────────────── */
+  .node {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px; margin-bottom: 8px;
+    position: relative; cursor: default;
+    transition: border-color .15s, transform .1s;
+  }
+  .node:last-child { margin-bottom: 0; }
+  .node:hover { border-color: var(--blue); transform: translateX(2px); }
+
+  .node-title { font-size: 0.82rem; font-weight: 600; margin-bottom: 2px; }
+  .node-sub { font-size: 0.72rem; color: var(--muted); }
+
+  .node-tag {
+    display: inline-block; font-size: 0.62rem; font-weight: 700;
+    padding: 1px 6px; border-radius: 4px; margin-right: 4px; margin-top: 4px;
+    letter-spacing: .04em; text-transform: uppercase;
+  }
+
+  /* ── GATE INDICATORS ────────────────────────────── */
+  .gate {
+    border-left: 3px solid;
+    border-radius: 0 8px 8px 0;
+  }
+  .gate-sql    { border-left-color: var(--blue); }
+  .gate-spec   { border-left-color: var(--purple); }
+  .gate-dq     { border-left-color: var(--green); }
+  .gate-tf     { border-left-color: var(--orange); }
+  .gate-fmt    { border-left-color: var(--blue); }
+  .gate-schema { border-left-color: var(--red); }
+  .gate-ai     { border-left-color: var(--teal); }
+
+  /* ── FULL-WIDTH GUARDRAIL ROW ───────────────────── */
+  .guardrail-row {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+    margin-bottom: 32px;
+  }
+  .guardrail-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px;
+  }
+  .guardrail-card-title {
+    font-size: 0.75rem; font-weight: 700; margin-bottom: 6px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .guardrail-card p { font-size: 0.72rem; color: var(--muted); line-height: 1.5; }
+
+  /* ── PR CHECK ROW ───────────────────────────────── */
+  .pr-row {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    margin-bottom: 32px;
+  }
+  .pr-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px;
+  }
+  .pr-card-title {
+    font-size: 0.78rem; font-weight: 700; margin-bottom: 4px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .pr-card p { font-size: 0.72rem; color: var(--muted); line-height: 1.5; }
+  .pr-blocks { font-size: 0.68rem; font-weight: 700; margin-top: 8px; }
+
+  /* ── PIPELINE DAG ───────────────────────────────── */
+  .dag-row {
+    display: flex; gap: 12px; align-items: flex-start;
+    margin-bottom: 32px; flex-wrap: wrap;
+  }
+  .dag-col { display: flex; flex-direction: column; gap: 8px; }
+  .dag-col-label { font-size: 0.65rem; font-weight: 700; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 4px; text-align: center; }
+  .dag-node {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px; min-width: 140px; text-align: center;
+    font-size: 0.78rem; font-weight: 600;
+  }
+  .dag-node.seed   { border-color: var(--yellow); color: var(--yellow); }
+  .dag-node.staging{ border-color: var(--blue); color: var(--blue); }
+  .dag-node.mart   { border-color: var(--green); color: var(--green); }
+  .dag-node.output { border-color: var(--purple); color: var(--purple); }
+  .dag-sub { font-size: 0.65rem; font-weight: 400; color: var(--muted); margin-top: 2px; }
+
+  .dag-arrow {
+    display: flex; align-items: center; padding-top: 28px; color: var(--muted);
+    font-size: 1.2rem;
+  }
+
+  /* ── LEGEND ─────────────────────────────────────── */
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 16px;
+    margin-bottom: 32px;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.72rem; color: var(--muted); }
+  .legend-line { width: 20px; height: 3px; border-radius: 2px; }
+
+  /* ── DIVIDER ────────────────────────────────────── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
+
+  /* ── FLOW DIAGRAM (main full-width) ─────────────── */
+  .flow-wrap { overflow-x: auto; padding-bottom: 8px; }
+  .flow {
+    display: flex; align-items: stretch; gap: 0;
+    min-width: 860px;
+  }
+
+  .flow-phase {
+    flex: 1; display: flex; flex-direction: column;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 18px 14px;
+  }
+  .flow-phase-label {
+    font-size: 0.68rem; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase; margin-bottom: 14px;
+    padding: 4px 10px; border-radius: 6px; text-align: center;
+    width: fit-content; margin-left: auto; margin-right: auto;
+  }
+  .flow-item {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 7px; padding: 8px 10px; margin-bottom: 7px;
+    font-size: 0.75rem;
+  }
+  .flow-item b { display: block; margin-bottom: 2px; }
+  .flow-item span { color: var(--muted); font-size: 0.68rem; }
+
+  .flow-arrow {
+    display: flex; align-items: center; justify-content: center;
+    width: 32px; flex-shrink: 0; color: var(--muted); font-size: 1rem;
+  }
+
+  .tag-blue   { background: rgba(79,142,247,.15); color: var(--blue); }
+  .tag-green  { background: rgba(52,211,153,.15); color: var(--green); }
+  .tag-purple { background: rgba(167,139,250,.15); color: var(--purple); }
+  .tag-orange { background: rgba(251,146,60,.15);  color: var(--orange); }
+  .tag-red    { background: rgba(248,113,113,.15); color: var(--red); }
+  .tag-teal   { background: rgba(45,212,191,.15);  color: var(--teal); }
+  .tag-yellow { background: rgba(251,191,36,.15);  color: var(--yellow); }
+
+  .blocks-badge {
+    display: inline-block; font-size: 0.6rem; font-weight: 700;
+    padding: 2px 7px; border-radius: 10px; margin-top: 6px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Data Pipeline Quality &amp; Security</h1>
+<p class="subtitle">Template guardrails applied to the <code>data-pipeline-example</code> project — DuckDB + dbt</p>
+
+<hr class="divider" />
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- SECTION 1: END-TO-END FLOW                                     -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="section-label">End-to-end flow</div>
+<div class="flow-wrap">
+  <div class="flow">
+
+    <!-- DEVELOPMENT -->
+    <div class="flow-phase">
+      <div class="flow-phase-label tag-blue">① Development</div>
+
+      <div class="flow-item gate gate-sql">
+        <b>Write SQL model</b>
+        <span>dbt model in models/staging/ or models/marts/</span>
+      </div>
+      <div class="flow-item gate gate-fmt">
+        <b>SQLFluff lint</b>
+        <span>sqlfluff lint &lt;file&gt;<br/>Zero violations required</span>
+      </div>
+      <div class="flow-item gate gate-sql">
+        <b>Performance review</b>
+        <span>Filter-first · no SELECT * · partition pruning</span>
+      </div>
+      <div class="flow-item gate gate-spec">
+        <b>SPEC file (if complex)</b>
+        <span>Window fn · dedup · UDF · multi-CASE<br/>→ specs/&lt;model&gt;/&lt;behaviour&gt;.spec.sql</span>
+      </div>
+      <div class="flow-item gate gate-dq">
+        <b>Quality tests</b>
+        <span>not_null · unique · accepted_values<br/>referential integrity · row count · freshness</span>
+      </div>
+      <div class="flow-item gate gate-tf">
+        <b>Terraform (if infra)</b>
+        <span>checkov scan · no secrets · private IPs<br/>least-privilege IAM · remote state</span>
+      </div>
+    </div>
+
+    <div class="flow-arrow">→</div>
+
+    <!-- PR / REVIEW -->
+    <div class="flow-phase">
+      <div class="flow-phase-label tag-red">② PR to main</div>
+
+      <div class="flow-item gate gate-fmt">
+        <b>SQLFluff check</b>
+        <span>GitHub Actions · lint changed .sql files<br/>Inline annotations on diff</span>
+        <div><span class="blocks-badge tag-red">BLOCKS MERGE</span></div>
+      </div>
+      <div class="flow-item gate gate-schema">
+        <b>Schema breaker</b>
+        <span>Diffs schema.yml · traverses dbt DAG<br/>Reports broken downstream nodes</span>
+        <div><span class="blocks-badge tag-red">BLOCKS MERGE</span></div>
+      </div>
+      <div class="flow-item gate gate-ai">
+        <b>Copilot AI review</b>
+        <span>Native GitHub Copilot · reads<br/>.github/copilot-code-review-instructions.md</span>
+        <div><span class="blocks-badge tag-teal">CONFIGURABLE</span></div>
+      </div>
+    </div>
+
+    <div class="flow-arrow">→</div>
+
+    <!-- MERGE -->
+    <div class="flow-phase">
+      <div class="flow-phase-label tag-green">③ Merge &amp; Run</div>
+
+      <div class="flow-item">
+        <b>dbt seed</b>
+        <span>Load CSV reference data into DuckDB</span>
+      </div>
+      <div class="flow-item">
+        <b>dbt run</b>
+        <span>Execute models in DAG order<br/>stg → dim → fact</span>
+      </div>
+      <div class="flow-item gate gate-dq">
+        <b>dbt test</b>
+        <span>All schema.yml tests + singular tests<br/>Business logic assertions</span>
+        <div><span class="blocks-badge tag-red">FAILS PIPELINE</span></div>
+      </div>
+      <div class="flow-item gate gate-spec">
+        <b>SPEC tests</b>
+        <span>specs/**/*.spec.sql → must return 0 rows<br/>Run against DuckDB</span>
+        <div><span class="blocks-badge tag-red">FAILS PIPELINE</span></div>
+      </div>
+    </div>
+
+    <div class="flow-arrow">→</div>
+
+    <!-- OUTPUT -->
+    <div class="flow-phase">
+      <div class="flow-phase-label tag-purple">④ Output</div>
+
+      <div class="flow-item" style="border-color:var(--green)">
+        <b>dim_customers</b>
+        <span>1 row/customer · deduplicated</span>
+        <br/><span class="node-tag tag-green">Critical</span>
+      </div>
+      <div class="flow-item" style="border-color:var(--green)">
+        <b>fact_orders</b>
+        <span>1 row/order · running total<br/>enriched with product</span>
+        <br/><span class="node-tag tag-green">Critical</span>
+      </div>
+      <div class="flow-item" style="border-color:var(--muted)">
+        <b>Revenue dashboard</b>
+        <span>Consumes both marts</span>
+        <br/><span class="node-tag tag-purple">Consumer</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<hr class="divider" />
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- SECTION 2: DAG                                                  -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="section-label">dbt DAG — this example</div>
+<div class="dag-row">
+  <div class="dag-col">
+    <div class="dag-col-label">Seeds</div>
+    <div class="dag-node seed">customers.csv</div>
+    <div class="dag-node seed">orders.csv</div>
+    <div class="dag-node seed">products.csv</div>
+  </div>
+
+  <div class="dag-arrow">→</div>
+
+  <div class="dag-col">
+    <div class="dag-col-label">Staging (views)</div>
+    <div class="dag-node staging">stg_customers<div class="dag-sub">rename · type cast · filter null PKs</div></div>
+    <div class="dag-node staging">stg_orders<div class="dag-sub">rename · type cast · filter null PKs</div></div>
+    <div class="dag-node staging">stg_products<div class="dag-sub">rename · type cast · filter null PKs</div></div>
+  </div>
+
+  <div class="dag-arrow">→</div>
+
+  <div class="dag-col">
+    <div class="dag-col-label">Marts (tables)</div>
+    <div class="dag-node mart">dim_customers<div class="dag-sub">dedup · ROW_NUMBER() OVER (...)</div></div>
+    <div class="dag-node mart">fact_orders<div class="dag-sub">join · filter cancelled · SUM() OVER (...)</div></div>
+  </div>
+
+  <div class="dag-arrow">→</div>
+
+  <div class="dag-col">
+    <div class="dag-col-label">Consumer</div>
+    <div class="dag-node output">Revenue Dashboard<div class="dag-sub">reads dim_customers + fact_orders</div></div>
+  </div>
+</div>
+
+<hr class="divider" />
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- SECTION 3: GUARDRAILS                                           -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="section-label">Always-active guardrails (development phase)</div>
+<div class="guardrail-row">
+  <div class="guardrail-card">
+    <div class="guardrail-card-title">
+      <div class="dot" style="background:var(--blue)"></div>
+      SQL Quality
+    </div>
+    <p>SQLFluff lint · filter-first rule · no SELECT * · partition pruning · incremental on large tables · no ORDER BY in CTEs</p>
+    <br/><div class="node-tag tag-blue">sql-quality.md</div>
+  </div>
+  <div class="guardrail-card">
+    <div class="guardrail-card-title">
+      <div class="dot" style="background:var(--purple)"></div>
+      SQL Spec Testing
+    </div>
+    <p>Window fn · dedup · UDF · conditional agg · date arithmetic · pivot · multi-CASE → SPEC file required. Empty result = PASS.</p>
+    <br/><div class="node-tag tag-purple">sql-spec-testing.md</div>
+  </div>
+  <div class="guardrail-card">
+    <div class="guardrail-card-title">
+      <div class="dot" style="background:var(--green)"></div>
+      Data Quality Checks
+    </div>
+    <p>PK not_null+unique · accepted_values · referential integrity · row count · freshness · business logic · column docs (Critical tier)</p>
+    <br/><div class="node-tag tag-green">data-quality-checks.md</div>
+  </div>
+  <div class="guardrail-card">
+    <div class="guardrail-card-title">
+      <div class="dot" style="background:var(--orange)"></div>
+      Terraform Security
+    </div>
+    <p>No secrets in code · least-privilege IAM · no public storage · private IPs · CMEK · remote state · audit logs · labels</p>
+    <br/><div class="node-tag tag-orange">terraform-security.md</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- SECTION 4: PR CHECKS                                            -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="section-label">PR merge gates (automated — GitHub Actions + Copilot)</div>
+<div class="pr-row">
+  <div class="pr-card">
+    <div class="pr-card-title">
+      <div class="dot" style="background:var(--blue)"></div>
+      ① SQLFluff Check
+    </div>
+    <p>GitHub Actions · runs on changed .sql files · reports inline annotations on the PR diff · uses .sqlfluff config from repo root</p>
+    <div class="pr-blocks" style="color:var(--red)">⛔ Hard blocks merge</div>
+  </div>
+  <div class="pr-card">
+    <div class="pr-card-title">
+      <div class="dot" style="background:var(--red)"></div>
+      ② Schema Breaker
+    </div>
+    <p>GitHub Actions · diffs schema.yml against main · BFS-traverses dbt manifest.json · lists every downstream node that breaks</p>
+    <div class="pr-blocks" style="color:var(--red)">⛔ Hard blocks merge</div>
+  </div>
+  <div class="pr-card">
+    <div class="pr-card-title">
+      <div class="dot" style="background:var(--teal)"></div>
+      ③ GitHub Copilot Review
+    </div>
+    <p>Native Copilot PR review · guided by .github/copilot-code-review-instructions.md · covers SQL, specs, data quality, Terraform</p>
+    <div class="pr-blocks" style="color:var(--teal)">⚙ Configurable via branch ruleset</div>
+  </div>
+</div>
+
+<hr class="divider" />
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- SECTION 5: SPEC FILE PATTERN                                    -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="section-label">SPEC file pattern — how it works</div>
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:32px;">
+  <div class="pr-card">
+    <div class="pr-card-title"><div class="dot" style="background:var(--purple)"></div>When required</div>
+    <p style="margin-top:6px">
+      <span class="node-tag tag-purple">ROW_NUMBER()</span>
+      <span class="node-tag tag-purple">RANK()</span>
+      <span class="node-tag tag-purple">SUM() OVER</span>
+      <span class="node-tag tag-purple">LAG / LEAD</span>
+      <span class="node-tag tag-purple">Dedup logic</span>
+      <span class="node-tag tag-purple">UDF call</span>
+      <span class="node-tag tag-purple">CASE 3+ branches</span>
+      <span class="node-tag tag-purple">Pivot / unpivot</span>
+      <span class="node-tag tag-purple">Recursive CTE</span>
+      <span class="node-tag tag-purple">4+ CTE chain</span>
+    </p>
+  </div>
+  <div class="pr-card">
+    <div class="pr-card-title"><div class="dot" style="background:var(--purple)"></div>Structure</div>
+    <p>
+      <strong>Header:</strong> BEHAVIOUR · INPUT · EXPECTED OUTPUT · EDGE CASES<br/><br/>
+      <strong>Query:</strong> input_fixture (literal VALUES) → actual (logic under test) → expected (literal VALUES) → mismatches (FULL OUTER JOIN)<br/><br/>
+      <strong>Pass:</strong> query returns 0 rows<br/>
+      <strong>Fail:</strong> any row returned = diff between actual and expected
+    </p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- SECTION 6: FILE MAP                                             -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="section-label">Repository file map</div>
+<div style="background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:18px; font-size:0.76rem; line-height:2; font-family: 'Fira Code', monospace;">
+  <span style="color:var(--yellow)">seeds/</span>
+    customers.csv &nbsp;orders.csv &nbsp;products.csv<br/>
+  <span style="color:var(--blue)">models/staging/</span>
+    stg_customers.sql &nbsp;stg_orders.sql &nbsp;stg_products.sql &nbsp;<span style="color:var(--green)">schema.yml</span><br/>
+  <span style="color:var(--green)">models/marts/</span>
+    dim_customers.sql &nbsp;fact_orders.sql &nbsp;<span style="color:var(--green)">schema.yml</span><br/>
+  <span style="color:var(--purple)">specs/dim_customers/</span>
+    latest-record-dedup.spec.sql<br/>
+  <span style="color:var(--purple)">specs/fact_orders/</span>
+    customer-running-total.spec.sql<br/>
+  <span style="color:var(--red)">tests/</span>
+    fact_orders_no_negative_amount.sql &nbsp;fact_orders_delivery_after_shipment.sql<br/>
+  <span style="color:var(--orange)">.github/workflows/</span>
+    pr-validation.yml<br/>
+  <span style="color:var(--teal)">.github/</span>
+    copilot-code-review-instructions.md<br/>
+  <span style="color:var(--orange)">scripts/</span>
+    check_schema_breaking.py<br/>
+  <span style="color:var(--muted)">.sqlfluff &nbsp;dbt_project.yml &nbsp;profiles.yml</span>
+</div>
+
+<hr class="divider" />
+<p style="font-size:0.7rem; color:var(--muted); text-align:center">
+  data-pipeline-example · data-template guardrails · DuckDB + dbt · 2026
+</p>
+
+</body>
+</html>

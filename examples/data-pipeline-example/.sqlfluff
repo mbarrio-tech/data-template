@@ -1,0 +1,57 @@
+[sqlfluff]
+# Default dialect — override per project at inception with the actual warehouse dialect.
+# Valid values: bigquery, snowflake, spark, databricks, redshift, postgres, duckdb, trino, tsql
+dialect = bigquery
+
+# Templater to use. Set to "dbt" if this project uses dbt models with Jinja.
+# Requires: pip install sqlfluff-templater-dbt
+templater = jinja
+
+# Maximum line length before a violation is raised
+max_line_length = 120
+
+# Files and folders to ignore (mirrors .gitignore conventions)
+exclude_rules = none
+
+[sqlfluff:indentation]
+# Indent width in spaces
+indent_unit = space
+tab_space_size = 4
+
+[sqlfluff:layout:type:comma]
+# Place commas at the end of the line (trailing), not the start (leading)
+line_position = trailing
+
+[sqlfluff:rules:capitalisation.keywords]
+# SQL keywords must be uppercase: SELECT, FROM, WHERE, JOIN, GROUP BY, etc.
+capitalisation_policy = upper
+
+[sqlfluff:rules:capitalisation.identifiers]
+# Column names and aliases must be lowercase (snake_case enforced at naming level)
+capitalisation_policy = lower
+
+[sqlfluff:rules:capitalisation.functions]
+# Built-in function names must be uppercase: COUNT, SUM, COALESCE, etc.
+capitalisation_policy = upper
+
+[sqlfluff:rules:capitalisation.literals]
+# Literal boolean/null keywords: TRUE, FALSE, NULL must be uppercase
+capitalisation_policy = upper
+
+[sqlfluff:rules:aliasing.table]
+# Require explicit AS keyword for table aliases
+aliasing = explicit
+
+[sqlfluff:rules:aliasing.column]
+# Require explicit AS keyword for column aliases
+aliasing = explicit
+
+[sqlfluff:rules:ambiguous.column_references]
+# GROUP BY and ORDER BY must reference column names, not positional integers
+group_by_and_order_by_style = consistent
+
+[sqlfluff:rules:references.qualification]
+# All column references must be qualified with table name or alias when multiple
+# tables are present in the query
+# Enforces: SELECT t.col FROM table AS t — not: SELECT col FROM table AS t
+force_enable = false

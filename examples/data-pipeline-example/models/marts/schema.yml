@@ -1,0 +1,109 @@
+version: 2
+
+models:
+  # ── dim_customers (Critical tier) ─────────────────────────────
+  - name: dim_customers
+    description: >
+      One row per customer, deduplicated to the most recent record.
+      Feeds the revenue dashboard and the customer cohort report (Critical tier).
+    columns:
+      - name: customer_id
+        description: "Primary key. Unique, never null."
+        tests:
+          - not_null
+          - unique
+
+      - name: customer_name
+        description: "Full name. Never null — sourced from a required field."
+        tests:
+          - not_null
+
+      - name: email
+        description: "Contact email. Nullable for B2B accounts."
+
+      - name: country
+        description: "ISO 3166-1 alpha-2 country code."
+        tests:
+          - accepted_values:
+              values: ['US', 'UK', 'CA', 'DE', 'FR', 'AU']
+
+      - name: segment
+        description: "Commercial segment. Drives revenue reporting splits."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['enterprise', 'smb', 'startup']
+
+      - name: created_date
+        description: "Account creation date."
+        tests:
+          - not_null
+
+  # ── fact_orders (Critical tier) ───────────────────────────────
+  - name: fact_orders
+    description: >
+      One row per non-cancelled order, enriched with product details and a
+      running total per customer. Feeds the revenue dashboard (Critical tier).
+    columns:
+      - name: order_id
+        description: "Primary key. One row per order."
+        tests:
+          - not_null
+          - unique
+
+      - name: customer_id
+        description: "Foreign key to dim_customers."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customers')
+              field: customer_id
+
+      - name: product_id
+        description: "Foreign key to stg_products."
+        tests:
+          - not_null
+
+      - name: product_name
+        description: "Denormalised product name at time of order."
+        tests:
+          - not_null
+
+      - name: product_category
+        description: "Denormalised category."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['software', 'service', 'hardware']
+
+      - name: status
+        description: "Order status. Cancelled orders are excluded from this model."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['pending', 'shipped', 'delivered']
+
+      - name: amount
+        description: "Order total in USD. Never null; must be >= 0."
+        tests:
+          - not_null
+
+      - name: ordered_date
+        description: "Date the order was placed."
+        tests:
+          - not_null
+
+      - name: shipped_date
+        description: "Date the order was shipped. Nullable — not yet shipped orders are NULL."
+
+      - name: delivered_date
+        description: "Date the order was delivered. Nullable — in-transit orders are NULL."
+
+      - name: customer_running_total
+        description: >
+          Cumulative order amount for this customer up to and including this order,
+          ordered by ordered_date ASC then order_id ASC.
+          Computed via SUM() OVER (PARTITION BY customer_id ...).
+          SPEC: specs/fact_orders/customer-running-total.spec.sql
+        tests:
+          - not_null

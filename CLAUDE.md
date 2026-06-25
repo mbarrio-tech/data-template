@@ -17,6 +17,12 @@
 @skills/brainstorming/SKILL.md
 @skills/verification-before-completion/SKILL.md
 
+<!-- Data pipeline guardrails — always active for this project -->
+@docs/capability-library/sql-quality.md
+@docs/capability-library/sql-spec-testing.md
+@docs/capability-library/data-quality-checks.md
+@docs/capability-library/terraform-security.md
+
 ## Always Active Rules
 
 These rules apply to every task in every session. They do not require a skill to be invoked.
@@ -26,6 +32,14 @@ These rules apply to every task in every session. They do not require a skill to
 - **IDF R3:** Every user-visible change ships behind a feature flag — no exceptions
 - Before modifying code: check `docs/idf/feature-governance.md` for active flags on the same component
 - Before claiming any work is done: run the verification-before-completion gate (already loaded above)
+
+### Data Pipeline Guardrails (always active)
+
+- **SQL quality:** Before completing any SQL file, data pipeline step, or table orchestration — run the lint checklist and performance review in `docs/capability-library/sql-quality.md`. No `SELECT *`, filters must precede joins, linter must pass clean.
+- **SQL spec testing:** Any model containing a window function, deduplication logic, UDF, conditional aggregation, date arithmetic, pivot, or multi-branch CASE must have a SPEC file at `specs/<model>/<behaviour>.spec.sql`. Rules in `docs/capability-library/sql-spec-testing.md`. A model with complex logic and no SPEC file is not done.
+- **Data quality checks:** Every table produced by the pipeline must have quality tests (not_null, unique, accepted_values, referential integrity, row count assertion) as defined in `docs/capability-library/data-quality-checks.md`. A table without tests is not done.
+- **Terraform security:** Before completing any `.tf` file — run the security checklist in `docs/capability-library/terraform-security.md`. No secrets in code, no public storage, no over-privileged IAM, automated scanner must pass.
+- **PR validation:** Every PR to main runs three automated checks — SQL formatting (SQLFluff), schema breaker (DAG impact), and AI review (GitHub Copilot). All three must pass before merge. Rules and setup in `docs/capability-library/pr-validation.md`.
 
 ## Project Identity
 

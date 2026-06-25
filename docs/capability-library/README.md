@@ -62,11 +62,13 @@ could follow this without asking a single question.]
 
 ## Current Capabilities
 
-*(No capability files yet — the first ones will be harvested after the first few cycles of real work.)*
-
 | Domain | File | Created | Last Updated |
 |---|---|---|---|
-| *(none yet)* | — | — | — |
+| SQL Quality | [sql-quality.md](sql-quality.md) | 2026-06-25 | 2026-06-25 (v1.1 — SQLFluff commands added) |
+| SQL Spec Testing | [sql-spec-testing.md](sql-spec-testing.md) | 2026-06-25 | 2026-06-25 |
+| Data Quality Checks | [data-quality-checks.md](data-quality-checks.md) | 2026-06-25 | 2026-06-25 |
+| Terraform Security | [terraform-security.md](terraform-security.md) | 2026-06-25 | 2026-06-25 |
+| PR Validation | [pr-validation.md](pr-validation.md) | 2026-06-25 | 2026-06-25 |
 
 ---
 

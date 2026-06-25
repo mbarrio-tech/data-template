@@ -88,3 +88,16 @@ Produce a review report with this exact structure:
 Every **Critical** item must be resolved before the PR is raised.
 **Important** items should be addressed in the same PR or immediately after.
 **Suggestions** are at the developer's discretion.
+
+## Automated PR Checks
+
+When a PR is raised, three automated checks run in CI before merge is allowed.
+This agent's manual review is a pre-PR gate; the automated checks are the merge gate.
+
+| CI job | What it validates | Blocks merge |
+|---|---|---|
+| `formatting` | SQLFluff lint on all changed SQL files | Yes |
+| `schema-breaker` | Column removals that break downstream DAG nodes | Yes |
+| GitHub Copilot review | AI review using `.github/copilot-code-review-instructions.md` | Configurable via branch ruleset |
+
+See `docs/capability-library/pr-validation.md` for setup and configuration.
